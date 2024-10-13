@@ -1,26 +1,30 @@
 package main
 
 import (
-	"wallet-app/config"
-	"wallet-app/controllers"
-	"wallet-app/routes"
-	"wallet-app/services"
-
 	"github.com/labstack/echo/v4"
+	"github.com/mahdidadashzadeh/wallet/config"
+	"github.com/mahdidadashzadeh/wallet/controllers"
+	"github.com/mahdidadashzadeh/wallet/repositories"
+	"github.com/mahdidadashzadeh/wallet/services"
 )
 
 func main() {
+	config.ConnectDatabase()
+
 	e := echo.New()
 
-	db, err := config.ConnectDatabase()
-	if err != nil {
-		panic("Failed to connect to database")
+	balanceRepo := repositories.BalanceRepository{DB: config.DB}
+	transactionRepo := repositories.TransactionRepository{DB: config.DB}
+	walletService := services.WalletService{
+		BalanceRepo:     balanceRepo,
+		TransactionRepo: transactionRepo,
 	}
+	walletController := controllers.WalletController{Service: walletService}
 
-	walletService := &services.WalletService{DB: db}
-	walletController := &controllers.WalletController{Service: walletService}
-
-	routes.SetupRoutes(e, walletController)
+	e.GET("/users/:id/balance", walletController.GetBalance)
+	e.GET("/users/:id/transactions", walletController.FetchTransactions)
+	e.POST("/users/:id/deposit", walletController.Deposit)
+	e.POST("/users/:id/withdraw", walletController.Withdraw)
 
 	e.Start(":8080")
 }
