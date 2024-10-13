@@ -1,4 +1,4 @@
-module wallet-app
+module github.com/mahdidadashzadeh/wallet
 
 go 1.22.6
 
